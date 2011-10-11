@@ -1,6 +1,9 @@
+/* Hashtrie. Public domain.
+ * Jenkins one-at-a-time used as hashing function. 
+ **/
 #include "hash.h"
-#include "malloc.h"
-#include "memory.h"
+#include <malloc.h>
+#include <memory.h>
 
 #define DEBUG_HASH
 #ifdef DEBUG_HASH
@@ -33,46 +36,60 @@ uint32_t jenkins_one_at_a_time_hash(const char *key, size_t len)
 }
 
 /** Path functions: (pick one pair) **/
-hash_t* hash_path_trie(hash_t *root, uint32_t key, int make) {
-
-#if !(TRIE_BIT_SPAN == 1 || TRIE_BIT_SPAN == 2 || TRIE_BIT_SPAN == 4 || TRIE_BIT_SPAN == 8)
-	#error "TRIE_BIT_SPAN define must be defined as 1, 2, 4 or 8"
+#if !(HTRIE_BIT_SPAN == 1 || HTRIE_BIT_SPAN == 2 || HTRIE_BIT_SPAN == 4 || HTRIE_BIT_SPAN == 8)
+	#error "HTRIE_BIT_SPAN define must be defined as 1, 2, 4 or 8"
 #endif
+#define TRIE_BIT_SPAN HTRIE_BIT_SPAN
 #define TRIE_BIT_STEPS	(32 / TRIE_BIT_SPAN)
 #define TRIE_EDGE_SPAN (2 << (TRIE_BIT_SPAN-1))
 #define TRIE_BIT_MASK (TRIE_EDGE_SPAN - 1)
 
+hash_t* hash_path_trie_get(hash_t *root, uint32_t key) {
 	uint32_t next;
 	int i;
 	for (i = 0; i < TRIE_BIT_STEPS; i++) {
 		next = (key & (TRIE_BIT_MASK << (i * TRIE_BIT_SPAN))) >> (i * TRIE_BIT_SPAN);
-		if (make) {
-			if (root->key != key && root->key == 0) break;
-			if (!root->tab) hash_init(root, TRIE_EDGE_SPAN);
-		} else {
-			if (root->key == key) break;
-			if (!root->tab) return NULL;
-		}
+		if (root->key == key) break;
+		if (!root->tab) return NULL;
+		root = root->tab + next;	
+	}
+	return root;
+}
+hash_t* hash_path_trie_set(hash_t *root, uint32_t key) {
+	uint32_t next;
+	int i;
+	for (i = 0; i < TRIE_BIT_STEPS; i++) {
+		next = (key & (TRIE_BIT_MASK << (i * TRIE_BIT_SPAN))) >> (i * TRIE_BIT_SPAN);
+		if (root->key != key && root->key == 0) break;
+		if (!root->tab) hash_init(root, TRIE_EDGE_SPAN);
 		root = root->tab + next;	
 	}
 	return root;
 }
 
-hash_t* hash_path_table(hash_t *root, uint32_t key, int make) {
+hash_t* hash_path_table_get(hash_t *root, uint32_t key) {
 	hash_t *match = NULL;
-	int i;	
-	if (!root->tab) {
-		if (!make) return NULL;
-		hash_init(root, HTABLE_ENTRIES);
-	}
+	int i;
+	if (root->tab)
 	for (i = 0; i < root->span; i++) {
 		match = root->tab + i;
 		if (match->key == key) break;
-		if (make && match->key == 0) break;
+		match = NULL;
+	}
+	return match;
+}
+hash_t* hash_path_table_set(hash_t *root, uint32_t key) {
+	hash_t *match = NULL;
+	int i;
+
+	if (!root->tab) hash_init(root, HTABLE_ENTRIES);
+	for (i = 0; i < root->span; i++) {
+		match = root->tab + i;
+		if (!match->key || match->key == key) break;
 		match = NULL;
 	}
 	/* Grow the table (2x) */
-	if (!match && make) {
+	if (!match) {
 		hash_t *larger_table = (hash_t *)realloc(root->tab, sizeof(hash_t) * root->span * 2);
 		if (larger_table == NULL) return NULL;//Fatal error
 		root->tab = larger_table;
@@ -81,27 +98,27 @@ hash_t* hash_path_table(hash_t *root, uint32_t key, int make) {
 #ifdef DEBUG_HASH
 		hash_mallocs++;
 		bucket_space *= 2;
-#endif		
+#endif
 	}
 	return match;
 }
 
 /* Glue: */
 inline hash_t* hash_find(hash_t *root, uint32_t key, int make) {
-	return HASH_PATH_FUNC(root, key, make);
+	return (!make ? HASH_FIND_FUNC(root, key) : HASH_PATH_FUNC(root, key) );
 }
 
 void* hash_get(hash_t* tree, const char* addr) {
 	hash_t *node;
 	uint32_t key = HASH_HASH_FUNC(addr, strlen(addr));
-	node = HASH_PATH_FUNC(tree, key, 0);
+	node = HASH_FIND_FUNC(tree, key);
 	return (node ? node->user : NULL);
 }
 
 void hash_set(hash_t* tree, const char* addr, void* value) {
 	hash_t *node;
 	uint32_t key = HASH_HASH_FUNC(addr, strlen(addr));
-	node = HASH_PATH_FUNC(tree, key, 1);
+	node = HASH_PATH_FUNC(tree, key);
 	if (node != NULL) {
 		node->key = key;
 		node->user = value;

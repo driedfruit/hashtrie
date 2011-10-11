@@ -6,8 +6,9 @@
 typedef uint32_t hkey;
 
 #define HASH_HASH_FUNC jenkins_one_at_a_time_hash
-#define HASH_PATH_FUNC hash_path_trie
-#define HTRIE_BIT_SPAN 8	/* 1, 2, 4 or 8 */
+#define HASH_FIND_FUNC hash_path_trie_get
+#define HASH_PATH_FUNC hash_path_trie_set
+#define HTRIE_BIT_SPAN 1	/* 1, 2, 4 or 8 */
 #define HTABLE_ENTRIES 256
 /** </config> **/
 
@@ -28,7 +29,7 @@ extern void hash_free(hash_t *tree);
 extern void* hash_get(hash_t* tree, const char* addr);
 extern void hash_set(hash_t* tree, const char* addr, void* value);
 
-/* Generic "hash_find" function, signature */ 
+/* Generic "hash_find" function */ 
 inline hash_t* hash_find(hash_t *root, uint32_t key, int make);
 
 #endif
