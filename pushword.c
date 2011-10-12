@@ -1,4 +1,7 @@
-#include "stdio.h"
+#include <stdio.h>
+#include <string.h>
+
+#include <malloc.h>
 
 #include "hash.h"
 
@@ -22,13 +25,7 @@ int main(int argc, const char* argv[]) {
 	char buf[1024];
 	while (fgets ( buf, 1024, f )) {
 		buf[strlen(buf)-1] = '\0';
-
-		char *word = malloc(sizeof(char) * 80);
-		memcpy(word, buf, 80);
-		word[strlen(buf)] = '\0';
-
-		//hash_set(root, buf, 0);		
-		hash_set(root, buf, word);
+		hash_set(root, buf, "word");
 	}
 
 	if (argc > 2) {
