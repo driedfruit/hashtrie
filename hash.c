@@ -37,7 +37,6 @@ uint32_t jenkins_one_at_a_time_hash(const char *key, size_t len)
 #endif
 
 /** Path functions: (pick one pair) **/
-#if (HASH_FIND_FUNC == hash_path_trie_get) 
 #if !(HTRIE_BIT_SPAN == 1 || HTRIE_BIT_SPAN == 2 || HTRIE_BIT_SPAN == 4 || HTRIE_BIT_SPAN == 8)
 	#error "HTRIE_BIT_SPAN define must be defined as 1, 2, 4 or 8"
 #endif
@@ -69,9 +68,7 @@ static hash_t* hash_path_trie_set(hash_t *root, uint32_t key) {
 	}
 	return root;
 }
-#endif
 
-#if (HASH_FIND_FUNC == hash_path_list_get) 
 static hash_t* hash_path_list_get(hash_t *root, uint32_t key) {
 	hash_t *match = NULL;
 	int i;
@@ -107,7 +104,6 @@ hash_t* hash_path_list_set(hash_t *root, uint32_t key) {
 	}
 	return match;
 }
-#endif
 
 /* Get/Set */
 void* hash_kget(hash_t* tree, uint32_t key) {
