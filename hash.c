@@ -19,8 +19,7 @@ void hash_report() {
 #endif
 
 /** Hashing functions: (pick one) **/
-#if (HASH_HASH_FUNC == jenkins_one_at_a_time_hash)  
-uint32_t jenkins_one_at_a_time_hash(const char *key, size_t len)
+uint32_t jenkins_oneatatime(const char *key, size_t len)
 {
     uint32_t hash, i;
     for(hash = i = 0; i < len; ++i)
@@ -34,7 +33,7 @@ uint32_t jenkins_one_at_a_time_hash(const char *key, size_t len)
     hash += (hash << 15);
     return hash;
 }
-#endif
+
 
 /** Path functions: (pick one pair) **/
 #if !(HTRIE_BIT_SPAN == 1 || HTRIE_BIT_SPAN == 2 || HTRIE_BIT_SPAN == 4 || HTRIE_BIT_SPAN == 8)

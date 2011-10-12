@@ -6,10 +6,14 @@
 #include <inttypes.h>
 typedef uint32_t hkey;
 
-#define HASH_HASH_FUNC jenkins_one_at_a_time_hash
+#ifndef HASH_HASH_FUNC
+#define HASH_HASH_FUNC jenkins_oneatatime
+#endif 
 #define HASH_FIND_FUNC hash_path_trie_get
 #define HASH_PATH_FUNC hash_path_trie_set
+#ifndef HTRIE_BIT_SPAN
 #define HTRIE_BIT_SPAN 1	/* 1, 2, 4 or 8 */
+#endif
 #define HTABLE_ENTRIES 256
 /** </config> **/
 
