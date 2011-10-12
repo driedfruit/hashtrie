@@ -5,7 +5,6 @@
 #include <malloc.h>
 #include <memory.h>
 
-#define DEBUG_HASH
 #ifdef DEBUG_HASH
 int hash_mallocs = 0;
 int bucket_space = 0;
@@ -20,6 +19,7 @@ void hash_report() {
 #endif
 
 /** Hashing functions: (pick one) **/
+#if (HASH_HASH_FUNC == jenkins_one_at_a_time_hash)  
 uint32_t jenkins_one_at_a_time_hash(const char *key, size_t len)
 {
     uint32_t hash, i;
@@ -34,8 +34,10 @@ uint32_t jenkins_one_at_a_time_hash(const char *key, size_t len)
     hash += (hash << 15);
     return hash;
 }
+#endif
 
 /** Path functions: (pick one pair) **/
+#if (HASH_FIND_FUNC == hash_path_trie_get) 
 #if !(HTRIE_BIT_SPAN == 1 || HTRIE_BIT_SPAN == 2 || HTRIE_BIT_SPAN == 4 || HTRIE_BIT_SPAN == 8)
 	#error "HTRIE_BIT_SPAN define must be defined as 1, 2, 4 or 8"
 #endif
@@ -44,30 +46,33 @@ uint32_t jenkins_one_at_a_time_hash(const char *key, size_t len)
 #define TRIE_EDGE_SPAN (2 << (TRIE_BIT_SPAN-1))
 #define TRIE_BIT_MASK (TRIE_EDGE_SPAN - 1)
 
-hash_t* hash_path_trie_get(hash_t *root, uint32_t key) {
+static hash_t* hash_path_trie_get(hash_t *root, uint32_t key) {
 	uint32_t next;
 	int i;
 	for (i = 0; i < TRIE_BIT_STEPS; i++) {
 		next = (key & (TRIE_BIT_MASK << (i * TRIE_BIT_SPAN))) >> (i * TRIE_BIT_SPAN);
 		if (root->key == key) break;
 		if (!root->tab) return NULL;
-		root = root->tab + next;	
+		root = root->tab + next;
 	}
 	return root;
 }
-hash_t* hash_path_trie_set(hash_t *root, uint32_t key) {
+static hash_t* hash_path_trie_set(hash_t *root, uint32_t key) {
 	uint32_t next;
 	int i;
 	for (i = 0; i < TRIE_BIT_STEPS; i++) {
 		next = (key & (TRIE_BIT_MASK << (i * TRIE_BIT_SPAN))) >> (i * TRIE_BIT_SPAN);
-		if (root->key != key && root->key == 0) break;
+		if (root->key == key) break;
+		else if (root->user == NULL) break;
 		if (!root->tab) hash_init(root, TRIE_EDGE_SPAN);
-		root = root->tab + next;	
+		root = root->tab + next;
 	}
 	return root;
 }
+#endif
 
-hash_t* hash_path_table_get(hash_t *root, uint32_t key) {
+#if (HASH_FIND_FUNC == hash_path_list_get) 
+static hash_t* hash_path_list_get(hash_t *root, uint32_t key) {
 	hash_t *match = NULL;
 	int i;
 	if (root->tab)
@@ -78,7 +83,7 @@ hash_t* hash_path_table_get(hash_t *root, uint32_t key) {
 	}
 	return match;
 }
-hash_t* hash_path_table_set(hash_t *root, uint32_t key) {
+hash_t* hash_path_list_set(hash_t *root, uint32_t key) {
 	hash_t *match = NULL;
 	int i;
 
@@ -102,22 +107,17 @@ hash_t* hash_path_table_set(hash_t *root, uint32_t key) {
 	}
 	return match;
 }
+#endif
 
-/* Glue: */
-inline hash_t* hash_find(hash_t *root, uint32_t key, int make) {
-	return (!make ? HASH_FIND_FUNC(root, key) : HASH_PATH_FUNC(root, key) );
-}
-
-void* hash_get(hash_t* tree, const char* addr) {
+/* Get/Set */
+void* hash_kget(hash_t* tree, uint32_t key) {
 	hash_t *node;
-	uint32_t key = HASH_HASH_FUNC(addr, strlen(addr));
 	node = HASH_FIND_FUNC(tree, key);
 	return (node ? node->user : NULL);
 }
 
-void hash_set(hash_t* tree, const char* addr, void* value) {
+void hash_kset(hash_t* tree, uint32_t key, void* value) {
 	hash_t *node;
-	uint32_t key = HASH_HASH_FUNC(addr, strlen(addr));
 	node = HASH_PATH_FUNC(tree, key);
 	if (node != NULL) {
 		node->key = key;
@@ -128,16 +128,36 @@ void hash_set(hash_t* tree, const char* addr, void* value) {
 	}
 }
 
+/* Glue: */
+inline hash_t* hash_find(hash_t *root, uint32_t key, int make) {
+	return (!make ? HASH_FIND_FUNC(root, key) : HASH_PATH_FUNC(root, key) );
+}
+
+inline void* hash_get(hash_t* tree, const char* addr) {
+	uint32_t key = HASH_HASH_FUNC(addr, strlen(addr));
+	return hash_kget(tree, key);
+}
+
+inline void hash_set(hash_t* tree, const char* addr, void* value) {
+	uint32_t key = HASH_HASH_FUNC(addr, strlen(addr));
+	hash_kset(tree, key, value);
+}
+
+#define CALLOC_INSTEAD_OF_MALLOC
+
 /* Generic API: */
 void hash_init(hash_t* tree, int span) {
-	/* TODO: calloc? */
+#ifdef CALLOC_INSTEAD_OF_MALLOC
+	tree->tab = calloc(span, sizeof(hash_t));
+#else
 	tree->tab = malloc(sizeof(hash_t) * span);
 	if (tree->tab) memset(tree->tab, 0, sizeof(hash_t) * span);
+#endif
 	tree->span = span;
 #ifdef DEBUG_HASH
 	hash_mallocs++;
 	bucket_space += span;
-#endif	
+#endif
 }
 
 void hash_done(hash_t *tree) {
@@ -150,6 +170,9 @@ void hash_done(hash_t *tree) {
 
 hash_t* hash_new() {
 	hash_t *tree;
+#ifdef CALLOC_INSTEAD_OF_MALLOC
+	tree = calloc(1, sizeof(hash_t));
+#else
 	tree = malloc(sizeof(hash_t));
 	if (tree) {
 		tree->tab = NULL;
@@ -157,6 +180,7 @@ hash_t* hash_new() {
 		tree->key = 0; 
 		tree->user = NULL;
 	}
+#endif	
 	return tree;
 }
 

@@ -2,6 +2,7 @@
 #define _HASH_H_
 
 /** <config> **/
+#include <stddef.h>
 #include <inttypes.h>
 typedef uint32_t hkey;
 
@@ -22,14 +23,20 @@ struct hash_t {
 };
 
 /* Generic hash API */
-extern void hash_init(hash_t* tree, int span);
-extern void hash_done(hash_t *tree);
 extern hash_t* hash_new();
-extern void hash_free(hash_t *tree);
-extern void* hash_get(hash_t* tree, const char* addr);
-extern void hash_set(hash_t* tree, const char* addr, void* value);
+extern void  hash_init(hash_t* tree, int span);
+extern void  hash_done(hash_t* tree);
+extern void    hash_free(hash_t* tree);
+extern void* hash_kget(hash_t* tree, uint32_t key);
+extern void  hash_kset(hash_t* tree, uint32_t key, void* value);
+inline void* hash_get(hash_t* tree, const char* strkey);
+inline void  hash_set(hash_t* tree, const char* strkey, void* value);
+inline hash_t* hash_find(hash_t* root, uint32_t key, int make);
 
-/* Generic "hash_find" function */ 
-inline hash_t* hash_find(hash_t *root, uint32_t key, int make);
+extern uint32_t HASH_HASH_FUNC (const char* key, size_t len);
+
+#ifdef DEBUG_HASH /* XXX */
+extern void hash_report();
+#endif
 
 #endif
