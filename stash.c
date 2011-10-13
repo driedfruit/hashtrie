@@ -18,7 +18,7 @@ void stash_report() {
 }
 #endif
 
-stash_entry* stash_entry_new(stash_t *st, const char *addr, int addr_len, int size) {
+static stash_entry* stash_entry_new(stash_t *st, const char *addr, int addr_len, int size) {
 	stash_entry *en;
 	int i;
 	/* Init table when needed */
@@ -92,7 +92,7 @@ void stash_put(stash_t* st, const char *addr, int addr_len, byte *var, int size)
 	hash_t *node = hash_find(st->tab, key, 1);
 	if (node == NULL) return; // Fatal error
 	if (node->user != NULL) { /* Node has buckets */
-		stash_entry *last;	
+		stash_entry *last;
 		en = (stash_entry *)st->table + ((int)node->user-1); /* Traverse buckets */
 		do {
 			last = en;

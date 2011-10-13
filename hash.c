@@ -61,7 +61,7 @@ static hash_t* hash_path_trie_set(hash_t *root, uint32_t key) {
 	for (i = 0; i < TRIE_BIT_STEPS; i++) {
 		next = (key & (TRIE_BIT_MASK << (i * TRIE_BIT_SPAN))) >> (i * TRIE_BIT_SPAN);
 		if (root->key == key) break;
-		else if (root->user == NULL) break;
+		else if (root->user == NULL) break; /* node is unused */
 		if (!root->tab) hash_init(root, TRIE_EDGE_SPAN);
 		root = root->tab + next;
 	}
