@@ -149,14 +149,14 @@ inline void hash_set(hash_t* tree, const char* addr, void* value) {
 	hash_kset(tree, key, value);
 }
 
-#define CALLOC_INSTEAD_OF_MALLOC
+//#define CALLOC_INSTEAD_OF_MALLOC
 
 /* Generic API: */
 void hash_init(hash_t* tree, int span) {
 #ifdef CALLOC_INSTEAD_OF_MALLOC
-	tree->tab = calloc(span, sizeof(hash_t));
+	tree->tab = (hash_t*) calloc(span, sizeof(hash_t));
 #else
-	tree->tab = malloc(sizeof(hash_t) * span);
+	tree->tab = (hash_t*) malloc(sizeof(hash_t) * span);
 	if (tree->tab) memset(tree->tab, 0, sizeof(hash_t) * span);
 #endif
 	tree->span = span;
@@ -177,9 +177,9 @@ void hash_done(hash_t *tree) {
 hash_t* hash_new() {
 	hash_t *tree;
 #ifdef CALLOC_INSTEAD_OF_MALLOC
-	tree = calloc(1, sizeof(hash_t));
+	tree = (hash_t*) calloc(1, sizeof(hash_t));
 #else
-	tree = malloc(sizeof(hash_t));
+	tree = (hash_t*) malloc(sizeof(hash_t));
 	if (tree) {
 		tree->tab = NULL;
 		tree->span = 0; 
