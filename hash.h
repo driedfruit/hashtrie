@@ -41,6 +41,7 @@ extern uint32_t HASH_HASH_FUNC (const char* key, size_t len);
 
 #ifdef DEBUG_HASH /* XXX */
 extern void hash_report();
+extern void dump_hash(hash_t *root, int depth);
 #endif
 
 #endif

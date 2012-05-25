@@ -9,6 +9,17 @@
 int hash_mallocs = 0;
 int bucket_space = 0;
 int pushed_words = 0;
+void dump_hash(hash_t *root, int depth) {
+
+	int i;
+	for (i = 0; i < depth; i++) printf("\t");
+	
+	printf("[%d] { %08x } == %p\n", root->span, root->key, root->user);
+	for (i = 0; i < root->span; i++) {
+		dump_hash(root->tab + i, depth+1);
+	}
+
+}
 void hash_report() {
 	int total = bucket_space * sizeof(hash_t);
 	printf("Total: %d bytes (%d kbytes, %d mbytes)\n", total, total/1000,total/1000/1000);
