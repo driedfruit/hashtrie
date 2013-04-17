@@ -105,31 +105,38 @@ void stash_put(stash_t* st, const char *addr, int addr_len, byte *var, int size)
 	bucket_travs++;
 #endif
 		} while (en);
-		if (en == NULL) { /* Key collision, create new entry */
-			//int rebase_offset = last - st->table;
-			en = stash_entry_new(st, addr, addr_len, size);
-			if (en == NULL) return;
-			//last = (stash_entry *)st->table + (rebase_offset); /* Find list tail */
-			while (last->next) {
-				last = last->next;
+		if (en == NULL) {
+			if (last->key_size == 0) {
+				en = last;
+			}
+			else { /* Key collision, create new entry */
+				//int rebase_offset = last - st->table;
+				en = stash_entry_new(st, addr, addr_len, size);
+				if (en == NULL) return;
+				//last = (stash_entry *)st->table + (rebase_offset); /* Find list tail */
+				while (last->next) {
+					last = last->next;
 #ifdef DEBUG_HASH				
 	bucket_waste_travs++;
 #endif	
+				}
+				last->next = en;
 			}
-			last->next = en;
-		} else if (size != en->val_size) {	/* Re-alloc: */
-			free(en->data); 
-			en->data = malloc(sizeof(byte) * (size + addr_len));
-			if (en->data == NULL) return; // Fatal error
-			en->key_size = addr_len;
-			en->val_size = size;
-			memcpy(en->data, addr, addr_len);
 		} 
 	} else {	/* Node is new, create new entry for it */
 		en = stash_entry_new(st, addr, addr_len, size);
 		if (en == NULL) return;
 		node->user = (void*)((int)(en - st->table) + 1); /* Make it a head of linked list */
 		node->key = key;
+	}
+
+	if (size != en->val_size) {	/* Re-alloc: */
+		free(en->data);
+		en->data = malloc(sizeof(byte) * (size + addr_len));
+		if (en->data == NULL) return; // Fatal error
+		en->key_size = addr_len;
+		en->val_size = size;
+		memcpy(en->data, addr, addr_len);
 	}
 	/* Save new value */
 	memcpy(&en->data[addr_len], var, size);
