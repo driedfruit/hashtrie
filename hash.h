@@ -33,9 +33,15 @@ extern void  hash_done(hash_t* tree);
 extern void    hash_free(hash_t* tree);
 extern void* hash_kget(hash_t* tree, uint32_t key);
 extern void  hash_kset(hash_t* tree, uint32_t key, void* value);
+#ifdef __cplusplus
+extern void* hash_get(hash_t* tree, const char* strkey);
+extern void  hash_set(hash_t* tree, const char* strkey, void* value);
+extern hash_t* hash_find(hash_t* root, uint32_t key, int make);
+#else
 inline void* hash_get(hash_t* tree, const char* strkey);
 inline void  hash_set(hash_t* tree, const char* strkey, void* value);
 inline hash_t* hash_find(hash_t* root, uint32_t key, int make);
+#endif
 
 extern uint32_t HASH_HASH_FUNC (const char* key, size_t len);
 

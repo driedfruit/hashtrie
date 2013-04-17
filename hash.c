@@ -135,16 +135,25 @@ void hash_kset(hash_t* tree, uint32_t key, void* value) {
 }
 
 /* Glue: */
-inline hash_t* hash_find(hash_t *root, uint32_t key, int make) {
+#ifndef __cplusplus
+inline
+#endif
+ hash_t* hash_find(hash_t *root, uint32_t key, int make) {
 	return (!make ? HASH_FIND_FUNC(root, key) : HASH_PATH_FUNC(root, key) );
 }
 
-inline void* hash_get(hash_t* tree, const char* addr) {
+#ifndef __cplusplus
+inline
+#endif
+ void* hash_get(hash_t* tree, const char* addr) {
 	uint32_t key = HASH_HASH_FUNC(addr, strlen(addr));
 	return hash_kget(tree, key);
 }
 
-inline void hash_set(hash_t* tree, const char* addr, void* value) {
+#ifndef __cplusplus
+inline
+#endif
+ void hash_set(hash_t* tree, const char* addr, void* value) {
 	uint32_t key = HASH_HASH_FUNC(addr, strlen(addr));
 	hash_kset(tree, key, value);
 }
@@ -157,7 +166,7 @@ void hash_init(hash_t* tree, int span) {
 	tree->tab = (hash_t*) calloc(span, sizeof(hash_t));
 #else
 	tree->tab = (hash_t*) malloc(sizeof(hash_t) * span);
-	if (tree->tab) memset(tree->tab, 0, sizeof(hash_t) * span);
+	if (tree->tab != NULL) memset(tree->tab, 0, sizeof(hash_t) * span);
 #endif
 	tree->span = span;
 #ifdef DEBUG_HASH
