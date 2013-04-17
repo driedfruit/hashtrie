@@ -33,6 +33,7 @@ extern void stash_free(stash_t* node);
 extern byte* stash_get(stash_t *st, const char *addr, int addr_len, int *size);
 extern byte* stash_peek(stash_t *st, const char *addr, int addr_len);
 extern void stash_put(stash_t* node, const char *path, int path_len, byte* var, int size);
+extern void stash_del(stash_t* node, const char *path, int path_len);
 
 /* Helpers */
 extern int   stash_unsafe_int;

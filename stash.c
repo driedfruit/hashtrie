@@ -142,6 +142,31 @@ void stash_put(stash_t* st, const char *addr, int addr_len, byte *var, int size)
 	memcpy(&en->data[addr_len], var, size);
 }
 
+
+void stash_del(stash_t* st, const char *addr, int addr_len) {
+	stash_entry *en;
+	hkey key = HASH_HASH_FUNC(addr, addr_len);
+	hash_t *node = hash_find(st->tab, key, 0);
+	if (node == NULL) return; // Fatal error
+	if (node->user != NULL) { /* Node has buckets */
+		stash_entry *last;
+		en = (stash_entry *)st->table + ((int)node->user-1); /* Traverse buckets */
+		do {
+			last = en;
+			if (en->key_size == addr_len 
+			&& !memcmp(en->data, addr, addr_len))
+				break;
+			en = en->next;
+		} while (en);
+	} else return;
+
+	/* Delete entry */
+	free(en->data);
+	en->data = NULL;
+	en->key_size = 0;
+	en->val_size = 0;
+}
+
 stash_t* stash_new() {
 	stash_t* node;
 	if ((node = malloc(sizeof(stash_t)))) {
