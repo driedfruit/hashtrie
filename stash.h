@@ -57,12 +57,19 @@ extern int*  stash_static_int(int Num);
 #define H_GETs(NODE, KEY) H_GET(NODE, KEY)
 #define H_GETi(NODE, KEY) (int)*(H_GET((NODE), (KEY)))
 
-#define H_READ(DST, NODE, KEY) \
-	stash_unsafe_ptr = stash_get((NODE), (KEY), strlen((KEY)) + 1, &stash_unsafe_int), \
-	memcpy((DST), stash_unsafe_ptr, stash_unsafe_int)
-#define H_READs(DST, NODE, KEY) \
-	H_READ(DST, NODE, KEY), \
-	(DST)[ stash_unsafe_int ] = '\0'
+#define H_READ(DST, NODE, KEY) do { \
+	stash_unsafe_ptr = stash_get((NODE), (KEY), strlen((KEY)) + 1, &stash_unsafe_int); \
+	if (stash_unsafe_ptr != NULL) \
+		memcpy((DST), stash_unsafe_ptr, stash_unsafe_int); \
+	else \
+		(DST)[0] = '\0'; \
+	} while(0)
+
+#define H_READs(DST, NODE, KEY) do { \
+	H_READ(DST, NODE, KEY); \
+	(DST)[ stash_unsafe_int ] = '\0'; \
+	} while(0)
+
 #define H_READi(DST, NODE, KEY) (DST) = H_GETi(NODE, KEY)
 
 #ifdef DEBUG_HASH /* XXX */
