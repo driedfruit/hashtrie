@@ -24,6 +24,7 @@ static stash_entry* stash_entry_new(stash_t *st, const char *addr, int addr_len,
 	/* Init table when needed */
 	if (st->table == NULL) {
 		st->table = malloc(sizeof(stash_entry) * STASH_MIN_SPAN);
+		memset(st->table, 0, sizeof(stash_entry) * STASH_MIN_SPAN);
 		if (st->table == NULL) return NULL;
 		st->span = STASH_MIN_SPAN;
 	}
